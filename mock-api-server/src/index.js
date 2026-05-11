@@ -3,11 +3,20 @@ const cors = require('cors');
 const db = require('./db');
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
+
+if (!db || !db.users) {
+    console.error("DB not initialized properly");
+}
 app.use(express.json());
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+origin: [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://client-side.vercel.app',
+  'https://admin-side.vercel.app'
+],
     credentials: true,
 }));
 
@@ -77,6 +86,7 @@ app.post('/api/auth/auth/refresh', (req, res) => {
     const match = cookieHeader.match(/refreshToken=([^;]+)/);
     const token = match ? match[1] : null;
     const user = db.getUserFromToken(token);
+    
     if (!user) return res.status(401).json({ success: false });
     const { accessToken, refreshToken } = db.createSession(user.id);
     db.setCookies(res, accessToken, refreshToken);
